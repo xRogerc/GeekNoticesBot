@@ -117,21 +117,42 @@ const REJECT_REGEX =
 // 1. BUSCAR NOTÍCIAS
 // ============================================================
 async function getNews() {
-  const categories = ["technology", "entertainment", "general", "science"];
+  // Fontes específicas de entretenimento/tech
+  const sources = [
+    "ign", "kotaku", "polygon", "the-verge", "techcrunch",
+    "ars-technica", "engadget", "gizmodo", "eurogamer", "destructoid",
+  ];
   const allArticles = [];
 
-  for (const cat of categories) {
+  for (const src of sources) {
     try {
       const res = await axios.get("https://newsapi.org/v2/top-headlines", {
         params: {
-          category: cat,
+          sources: src,
           language: "en",
           apiKey: process.env.NEWS_API_KEY,
         },
       });
-      allArticles.push(...res.data.articles.slice(0, 10));
+      allArticles.push(...res.data.articles.slice(0, 5));
     } catch (err) {
-      console.error(`✗ Erro ao buscar ${cat}:`, err.message);
+      // Fontes podem não estar disponíveis no free tier
+    }
+  }
+
+  // Fallback: categorias gerais
+  if (allArticles.length < 10) {
+    const categories = ["technology", "entertainment"];
+    for (const cat of categories) {
+      try {
+        const res = await axios.get("https://newsapi.org/v2/top-headlines", {
+          params: {
+            category: cat,
+            language: "en",
+            apiKey: process.env.NEWS_API_KEY,
+          },
+        });
+        allArticles.push(...res.data.articles.slice(0, 10));
+      } catch (err) {}
     }
   }
 

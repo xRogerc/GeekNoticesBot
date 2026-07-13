@@ -139,9 +139,36 @@ async function getNews() {
 }
 
 // ============================================================
+// 1.5. BUSCAR CONTEÚDO COMPLETO DA NOTÍCIA
+// ============================================================
+async function fetchArticleContent(url) {
+  if (!url) return "";
+  try {
+    const res = await axios.get(url, {
+      timeout: 10000,
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+    // Remove tags HTML e pega apenas o texto
+    const text = res.data
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    // Pega apenas os primeiros 3000 caracteres
+    return text.slice(0, 3000);
+  } catch (err) {
+    console.log("· Não foi possível buscar conteúdo original:", err.message);
+    return "";
+  }
+}
+
+// ============================================================
 // 2. GERAR ARTIGO
 // ============================================================
 async function generateArticle(news) {
+  const fullContent = await fetchArticleContent(news.url);
+
   const prompt = `
 Você é um jornalista profissional escrevendo para o Geek Notícias, um portal de tecnologia e entretenimento em português do Brasil.
 
@@ -151,6 +178,7 @@ Sua tarefa é reescrever a notícia abaixo em português, seguindo o padrão edi
 Título original: ${news.title}
 Descrição: ${news.description ?? ""}
 Fonte: ${news.source?.name ?? ""}
+${fullContent ? `\n--- CONTEÚDO COMPLETO DA NOTÍCIA ORIGINAL ---\n${fullContent}\n` : ""}
 
 --- REGRAS ABSOLUTAS ---
 1. O conteúdo DEVE ser baseado EXATAMENTE nos dados acima. NÃO invente informações que não estejam na notícia original.

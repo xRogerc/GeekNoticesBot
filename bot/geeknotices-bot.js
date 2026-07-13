@@ -158,6 +158,8 @@ Fonte: ${news.source?.name ?? ""}
 3. NÃO escreva textos genéricos sobre história do streaming, evolução da tecnologia, ou assuntos tangenciais. Foque no assunto DA NOTÍCIA.
 4. Use os nomes reais: pessoas, filmes, séries, jogos, empresas mencionados na notícia original.
 5. Se a descrição original é curta, expanda com contexto relevante ao assunto específico (não genérico).
+6. NÃO preencha espaço com texto vazio ou repetitivo. Se tem pouco conteúdo, escreva menos — qualidade > quantidade.
+7. NÃO copie ecole títulos de seções como "contexto atual", "história completa", "entre fidelidade e reinvenção", "legado para o futuro" — invente títulos específicos para cada seção.
 
 --- PADRÃO EDITORIAL ---
 
@@ -174,9 +176,11 @@ Fonte: ${news.source?.name ?? ""}
 * Use os dados reais da notícia
 
 **4. DESENVOLVIMENTO**
-* Use 2 a 4 seções com <h3><strong>
-* O conteúdo de cada seção DEVE estar diretamente relacionado ao assunto da notícia
-* Se a notícia tem poucos detalhes, foque na análise do impacto e relevância
+* Crie de 2 a 4 seções com títulos PRÓPRIOS baseados no assunto
+* NÃO use títulos genéricos como "contexto atual", "história completa", "legado"
+* Os títulos devem descrever o que cada seção aborda (ex: "O que é [filme/jogo/série]", "Por que importa", "Reação dos fãs", "O que esperar")
+* Todo conteúdo DEVE estar diretamente relacionado ao assunto da notícia
+* Se a notícia tem poucos detalhes, escreva um artigo mais curto — NÃO preencha com texto genérico
 * Use listas <ul><li> quando fizer sentido
 
 **5. CONCLUSÃO**

@@ -234,20 +234,6 @@ RETORNE APENAS JSON VÁLIDO (sem markdown, sem \`\`\`):
   "category": "games | cinema_tv | quadrinhos | tech | anime"
 }
 `;
-* Mínimo: 700 palavras
-* Texto denso, mas fluido
-* Evitar repetições
-* Manter ritmo de leitura agradável
-
-IMPORTANTE:
-* O texto deve parecer uma matéria real publicada
-* NÃO mencione que é uma IA
-* NÃO explique o processo — apenas escreva a notícia
-* NÃO use emojis ou gírias
-* Tags em minúsculas, sem #
-
-RETORNE APENAS JSON VÁLIDO (sem markdown, sem \`\`\`):
-`;
 
   const response = await openai.chat.completions.create({
     model: "llama-3.3-70b-versatile",

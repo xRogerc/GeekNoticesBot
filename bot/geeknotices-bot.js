@@ -118,6 +118,55 @@ const REJECT_REGEX =
 // ============================================================
 // 1. BUSCAR NOTÍCIAS
 // ============================================================
+
+// Normalizar artigo para formato padrão
+function normalizeArticle(a) {
+  return {
+    title: a.title,
+    description: a.description,
+    url: a.url,
+    urlToImage: a.urlToImage || a.image || null,
+    publishedAt: a.publishedAt,
+    source: a.source || { name: "Unknown" },
+  };
+}
+
+// Buscar notícias do GNews (fallback)
+async function getNewsFromGNews() {
+  const queries = [
+    "video game", "gaming", "anime",
+    "movie", "entertainment",
+    "playstation", "xbox", "nintendo",
+    "marvel", "star wars", "netflix",
+  ];
+  const articles = [];
+  const oneDayAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+  for (const q of queries) {
+    try {
+      const res = await axios.get("https://gnews.io/api/v4/search", {
+        params: {
+          q,
+          lang: "en",
+          max: 5,
+          token: process.env.GNEWS_API_KEY,
+        },
+      });
+      const recent = (res.data.articles || []).filter((a) => {
+        if (!a.publishedAt) return true;
+        return new Date(a.publishedAt) >= oneDayAgo;
+      });
+      if (recent.length > 0) {
+        console.log(`  ✓ GNews "${q}": ${recent.length} notícias`);
+      }
+      articles.push(...recent.map(normalizeArticle).slice(0, 3));
+    } catch (err) {
+      // GNews pode estar indisponível
+    }
+  }
+  return articles;
+}
+
 async function getNews() {
   // Fontes específicas de entretenimento/tech
   const sources = [
@@ -132,6 +181,7 @@ async function getNews() {
     "marvel", "star wars", "netflix", "streaming",
   ];
   const allArticles = [];
+  let newsApiFailed = false;
   const oneDayAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
   // 1. Fontes específicas
@@ -153,37 +203,54 @@ async function getNews() {
       }
       allArticles.push(...recent.slice(0, 5));
     } catch (err) {
-      // Fontes podem não estar disponíveis no free tier
+      if (err.response?.status === 429) {
+        newsApiFailed = true;
+        console.log("⚠ NewsAPI rate limit atingido, pulando...");
+        break;
+      }
     }
   }
 
   // 2. Buscas por tópicos (everything endpoint)
-  for (const q of queries) {
-    try {
-      const res = await axios.get("https://newsapi.org/v2/everything", {
-        params: {
-          q,
-          language: "en",
-          sortBy: "publishedAt",
-          pageSize: 5,
-          apiKey: process.env.NEWS_API_KEY,
-        },
-      });
-      const recent = (res.data.articles || []).filter((a) => {
-        if (!a.publishedAt) return true;
-        return new Date(a.publishedAt) >= oneDayAgo;
-      });
-      if (recent.length > 0) {
-        console.log(`  ✓ ${q}: ${recent.length} notícias`);
+  if (!newsApiFailed) {
+    for (const q of queries) {
+      try {
+        const res = await axios.get("https://newsapi.org/v2/everything", {
+          params: {
+            q,
+            language: "en",
+            sortBy: "publishedAt",
+            pageSize: 5,
+            apiKey: process.env.NEWS_API_KEY,
+          },
+        });
+        const recent = (res.data.articles || []).filter((a) => {
+          if (!a.publishedAt) return true;
+          return new Date(a.publishedAt) >= oneDayAgo;
+        });
+        if (recent.length > 0) {
+          console.log(`  ✓ ${q}: ${recent.length} notícias`);
+        }
+        allArticles.push(...recent.slice(0, 3));
+      } catch (err) {
+        if (err.response?.status === 429) {
+          newsApiFailed = true;
+          console.log("⚠ NewsAPI rate limit atingido, usando GNews...");
+          break;
+        }
       }
-      allArticles.push(...recent.slice(0, 3));
-    } catch (err) {
-      // free tier pode bloquear everything endpoint
     }
   }
 
-  // Fallback: categorias gerais (apenas se poucas notícias coletadas)
-  if (allArticles.length < 10) {
+  // 3. Fallback: GNews (se NewsAPI estourou ou retornou poucas notícias)
+  if (allArticles.length < 5 || newsApiFailed) {
+    console.log("🔄 Buscando notícias no GNews...");
+    const gnewsArticles = await getNewsFromGNews();
+    allArticles.push(...gnewsArticles);
+  }
+
+  // 4. Fallback: categorias gerais (apenas se poucas notícias coletadas)
+  if (allArticles.length < 10 && !newsApiFailed) {
     const categories = ["technology", "entertainment"];
     for (const cat of categories) {
       try {

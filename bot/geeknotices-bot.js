@@ -435,30 +435,48 @@ async function uniqueSlug(base) {
 async function uploadImage(url) {
   if (!url) return null;
 
-  try {
-    const response = await axios.get(url, { responseType: "arraybuffer" });
-    const contentType = response.headers["content-type"] || "image/jpeg";
-    const ext = contentType.split("/")[1] || "jpg";
-    const fileName = `${randomUUID()}.${ext}`;
+  const userAgents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0",
+  ];
 
-    const { error } = await supabase.storage
-      .from(BUCKET_NAME)
-      .upload(fileName, response.data, {
-        contentType,
-        upsert: false,
+  for (const ua of userAgents) {
+    try {
+      const response = await axios.get(url, {
+        responseType: "arraybuffer",
+        timeout: 15000,
+        headers: {
+          "User-Agent": ua,
+          "Accept": "image/*,*/*",
+          "Referer": new URL(url).origin + "/",
+        },
       });
+      const contentType = response.headers["content-type"] || "image/jpeg";
+      if (!contentType.startsWith("image/")) continue;
+      const ext = contentType.split("/")[1] || "jpg";
+      const fileName = `${randomUUID()}.${ext}`;
 
-    if (error) {
-      console.error("✗ Erro upload:", error.message);
-      return null;
+      const { error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(fileName, response.data, {
+          contentType,
+          upsert: false,
+        });
+
+      if (error) {
+        console.error("✗ Erro upload:", error.message);
+        return null;
+      }
+
+      const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(fileName);
+      return data.publicUrl;
+    } catch (err) {
+      continue;
     }
-
-    const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(fileName);
-    return data.publicUrl;
-  } catch (err) {
-    console.error("✗ Erro download imagem:", err.message);
-    return null;
   }
+  console.log("· Imagem indisponível:", url);
+  return null;
 }
 
 // ============================================================
@@ -478,7 +496,21 @@ async function saveArticle(article, news) {
   const slug = await uniqueSlug(article.title);
 
   // Upload da imagem para o Supabase Storage
-  const imageUrl = await uploadImage(news.urlToImage);
+  let imageUrl = await uploadImage(news.urlToImage);
+
+  // Fallback: tentar extrair imagem do conteúdo original
+  if (!imageUrl && news.url) {
+    try {
+      const res = await axios.get(news.url, {
+        timeout: 10000,
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      });
+      const ogImage = res.data.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
+      if (ogImage && ogImage[1]) {
+        imageUrl = await uploadImage(ogImage[1]);
+      }
+    } catch (err) {}
+  }
 
   const { error } = await supabase.from("articles").insert({
     author_id: AUTHOR_ID,

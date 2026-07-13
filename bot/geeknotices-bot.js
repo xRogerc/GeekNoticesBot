@@ -364,7 +364,7 @@ RETORNE APENAS JSON VÁLIDO (sem markdown, sem \`\`\`):
 `;
 
   const response = await openai.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: "meta-llama/llama-4-scout-17b-16e-instruct",
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" },
   });

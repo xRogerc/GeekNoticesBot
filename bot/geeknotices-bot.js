@@ -200,6 +200,8 @@ async function fetchArticleContent(url) {
 async function generateArticle(news) {
   const fullContent = await fetchArticleContent(news.url);
 
+  const hasFullContent = fullContent && fullContent.length > 200;
+
   const prompt = `
 Você é um jornalista profissional escrevendo para o Geek Notícias, um portal de tecnologia e entretenimento em português do Brasil.
 
@@ -209,7 +211,7 @@ Sua tarefa é reescrever a notícia abaixo em português, seguindo o padrão edi
 Título original: ${news.title}
 Descrição: ${news.description ?? ""}
 Fonte: ${news.source?.name ?? ""}
-${fullContent ? `\n--- CONTEÚDO COMPLETO DA NOTÍCIA ORIGINAL ---\n${fullContent}\n` : ""}
+${hasFullContent ? `\n--- CONTEÚDO COMPLETO DA NOTÍCIA ORIGINAL ---\n${fullContent}\n` : "\nATENÇÃO: Não foi possível obter o conteúdo completo da notícia original. Escreva APENAS com base nos dados acima (título + descrição). Seja curto e direto — NÃO invente detalhes.\n"}
 
 --- REGRAS ABSOLUTAS ---
 1. O conteúdo DEVE ser baseado EXATAMENTE nos dados acima. NÃO invente informações que não estejam na notícia original.
@@ -218,7 +220,8 @@ ${fullContent ? `\n--- CONTEÚDO COMPLETO DA NOTÍCIA ORIGINAL ---\n${fullConten
 4. Use os nomes reais: pessoas, filmes, séries, jogos, empresas mencionados na notícia original.
 5. Se a descrição original é curta, expanda com contexto relevante ao assunto específico (não genérico).
 6. NÃO preencha espaço com texto vazio ou repetitivo. Se tem pouco conteúdo, escreva menos — qualidade > quantidade.
-7. NÃO copie ecole títulos de seções como "contexto atual", "história completa", "entre fidelidade e reinvenção", "legado para o futuro" — invente títulos específicos para cada seção.
+7. NÃO copie ou ecolhe títulos de seções como "contexto atual", "história completa", "entre fidelidade e reinvenção", "legado para o futuro" — invente títulos específicos para cada seção.
+8. Se NÃO há conteúdo completo (apenas título + descrição), escreva um artigo de no máximo 3 parágrafos. NÃO invente reação de fãs, opiniões, ou detalhes que não estejam na descrição.
 
 --- PADRÃO EDITORIAL ---
 

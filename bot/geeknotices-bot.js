@@ -74,6 +74,8 @@ const VIRAL_KEYWORDS = [
   "fire emblem", "xenoblade", "bayonetta", "persona", "megami tensei", "diablo",
   "overwatch", "apex legends", "genshin impact", "honkai", "epic games",
   "epic store", "battle.net", "origin", "gog",
+  "pc gaming", "nvidia", "amd", "intel", "gpu", "cpu",
+  "fsr", "xess", "dlss", "steam deck", "rog ally", "legion go",
   // Anime & Manga
   "anime", "manga", "naruto", "dragon ball", "bleach", "one piece", "jujutsu kaisen",
   "demon slayer", "attack on titan", "my hero academia", "spy x family",
@@ -121,10 +123,25 @@ async function getNews() {
   const sources = [
     "ign", "kotaku", "polygon", "the-verge", "techcrunch",
     "ars-technica", "engadget", "gizmodo", "eurogamer", "destructoid",
+    "comicbook.com", "screenrant", "hollywoodreporter", "variety",
+    "deadline", "collider", "gamerant", "pcgamer", "pcgamesn",
+    "vg247", "pushsquare", "nintendolife", "purexbox", "gamesradar",
+    "siliconera", "anime-news-network", "thegamer", "dualshockers",
+  ];
+  // Buscas por tópicos (usa everything endpoint — mais ampla)
+  const queries = [
+    "video game news", "gaming news", "anime news",
+    "movie news", "series news", "entertainment news",
+    "technology news", "pop culture",
+    "playstation", "xbox", "nintendo", "pc gaming",
+    "marvel", "dc comics", "star wars",
+    "netflix", "disney plus", "streaming",
+    "k-pop", "hololive", "vtuber",
   ];
   const allArticles = [];
   const oneDayAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
+  // 1. Fontes específicas
   for (const src of sources) {
     try {
       const res = await axios.get("https://newsapi.org/v2/top-headlines", {
@@ -134,18 +151,45 @@ async function getNews() {
           apiKey: process.env.NEWS_API_KEY,
         },
       });
-      // Filtra apenas notícias das últimas 24 horas
       const recent = res.data.articles.filter((a) => {
         if (!a.publishedAt) return true;
         return new Date(a.publishedAt) >= oneDayAgo;
       });
+      if (recent.length > 0) {
+        console.log(`  ✓ ${src}: ${recent.length} notícias`);
+      }
       allArticles.push(...recent.slice(0, 5));
     } catch (err) {
       // Fontes podem não estar disponíveis no free tier
     }
   }
 
-  // Fallback: categorias gerais
+  // 2. Buscas por tópicos (everything endpoint)
+  for (const q of queries) {
+    try {
+      const res = await axios.get("https://newsapi.org/v2/everything", {
+        params: {
+          q,
+          language: "en",
+          sortBy: "publishedAt",
+          pageSize: 5,
+          apiKey: process.env.NEWS_API_KEY,
+        },
+      });
+      const recent = (res.data.articles || []).filter((a) => {
+        if (!a.publishedAt) return true;
+        return new Date(a.publishedAt) >= oneDayAgo;
+      });
+      if (recent.length > 0) {
+        console.log(`  ✓ ${q}: ${recent.length} notícias`);
+      }
+      allArticles.push(...recent.slice(0, 3));
+    } catch (err) {
+      // free tier pode bloquear everything endpoint
+    }
+  }
+
+  // Fallback: categorias gerais (apenas se poucas notícias coletadas)
   if (allArticles.length < 10) {
     const categories = ["technology", "entertainment"];
     for (const cat of categories) {
@@ -154,6 +198,7 @@ async function getNews() {
           params: {
             category: cat,
             language: "en",
+            pageSize: 10,
             apiKey: process.env.NEWS_API_KEY,
           },
         });

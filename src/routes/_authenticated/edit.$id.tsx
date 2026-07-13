@@ -53,6 +53,7 @@ function EditPage() {
             category: data.category,
             tags: ((data as any).tags as string[] | null) ?? [],
             is_nsfw: ((data as any).is_nsfw as boolean | null) ?? false,
+            affiliate_links: ((data as any).affiliate_links as { url: string; label: string; platform?: string }[] | null) ?? [],
           }}
         />
       </div>

@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       articles: {
         Row: {
+          affiliate_links: Json
           author_id: string
           category: Database["public"]["Enums"]["news_category"]
           content: string
@@ -31,6 +32,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          affiliate_links?: Json
           author_id: string
           category: Database["public"]["Enums"]["news_category"]
           content: string
@@ -46,6 +48,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          affiliate_links?: Json
           author_id?: string
           category?: Database["public"]["Enums"]["news_category"]
           content?: string

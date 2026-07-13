@@ -13,6 +13,7 @@ import { Repeat2 } from "lucide-react";
 import { FollowButton } from "@/components/follow-button";
 import { AdSlot } from "@/components/ad-slot";
 import { AD_SLOTS } from "@/lib/ads";
+import { AffiliateLinks, type AffiliateLink } from "@/components/affiliate-links";
 
 export const Route = createFileRoute("/news/$slug")({
   ssr: false,
@@ -266,6 +267,8 @@ function ArticleView() {
       ) : (
         <RichContent html={article.content} className="mt-8 text-lg leading-relaxed" />
       )}
+
+      <AffiliateLinks links={(article.affiliate_links as unknown as AffiliateLink[]) ?? []} />
 
       {/* Actions */}
       <div className="mt-10 flex items-center gap-4 border-t border-border/60 pt-6">

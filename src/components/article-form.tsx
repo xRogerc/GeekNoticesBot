@@ -8,6 +8,8 @@ import { RichEditor } from "@/components/rich-editor";
 import { moderateArticle } from "@/lib/moderation.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { ImageUploader } from "@/components/image-uploader";
+import type { AffiliateLink } from "@/components/affiliate-links";
+import { Plus, X } from "lucide-react";
 
 export type ArticleFormValues = {
   id?: string;
@@ -18,11 +20,12 @@ export type ArticleFormValues = {
   category: Category;
   tags: string[];
   is_nsfw: boolean;
+  affiliate_links: AffiliateLink[];
 };
 
 export function ArticleForm({ initial, userId }: { initial?: ArticleFormValues; userId: string }) {
   const [values, setValues] = useState<ArticleFormValues>(
-    initial ?? { title: "", excerpt: "", content: "", cover_image_url: "", category: "games", tags: [], is_nsfw: false },
+    initial ?? { title: "", excerpt: "", content: "", cover_image_url: "", category: "games", tags: [], is_nsfw: false, affiliate_links: [] },
   );
   const [tagsInput, setTagsInput] = useState<string>((initial?.tags ?? []).join(", "));
   const [saving, setSaving] = useState(false);
@@ -86,6 +89,7 @@ export function ArticleForm({ initial, userId }: { initial?: ArticleFormValues; 
             category: values.category,
             tags,
             is_nsfw,
+            affiliate_links: values.affiliate_links,
           } as never)
           .eq("id", initial.id);
         if (error) throw error;
@@ -107,6 +111,7 @@ export function ArticleForm({ initial, userId }: { initial?: ArticleFormValues; 
             category: values.category,
             tags,
             is_nsfw,
+            affiliate_links: values.affiliate_links,
           } as never)
           .select("slug")
           .single();
@@ -219,6 +224,75 @@ export function ArticleForm({ initial, userId }: { initial?: ArticleFormValues; 
           </p>
         </div>
       </label>
+
+      <div>
+        <label className="text-sm font-medium">Links de Afiliado</label>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Adicione links de produtos relacionados (Amazon, Mercado Livre, etc).
+        </p>
+        <div className="mt-2 space-y-3">
+          {values.affiliate_links.map((link, i) => (
+            <div key={i} className="flex gap-2 items-start">
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <input
+                  type="text"
+                  value={link.label}
+                  onChange={(e) => {
+                    const next = [...values.affiliate_links];
+                    next[i] = { ...next[i], label: e.target.value };
+                    update("affiliate_links", next);
+                  }}
+                  className="px-3 py-2 rounded-md bg-input border border-border focus:border-primary focus:outline-none text-sm"
+                  placeholder="Nome do produto"
+                />
+                <input
+                  type="url"
+                  value={link.url}
+                  onChange={(e) => {
+                    const next = [...values.affiliate_links];
+                    next[i] = { ...next[i], url: e.target.value };
+                    update("affiliate_links", next);
+                  }}
+                  className="px-3 py-2 rounded-md bg-input border border-border focus:border-primary focus:outline-none text-sm"
+                  placeholder="https://..."
+                />
+                <input
+                  type="text"
+                  value={link.platform ?? ""}
+                  onChange={(e) => {
+                    const next = [...values.affiliate_links];
+                    next[i] = { ...next[i], platform: e.target.value };
+                    update("affiliate_links", next);
+                  }}
+                  className="px-3 py-2 rounded-md bg-input border border-border focus:border-primary focus:outline-none text-sm"
+                  placeholder="Plataforma (opcional)"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = values.affiliate_links.filter((_, j) => j !== i);
+                  update("affiliate_links", next);
+                }}
+                className="mt-1 p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+          {values.affiliate_links.length < 5 && (
+            <button
+              type="button"
+              onClick={() => {
+                update("affiliate_links", [...values.affiliate_links, { url: "", label: "", platform: "" }]);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-dashed border-border text-sm text-muted-foreground hover:border-cyan-glow/50 hover:text-cyan-glow transition-colors"
+            >
+              <Plus className="h-4 w-4" /> Adicionar link
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="flex justify-end gap-3">
         <button

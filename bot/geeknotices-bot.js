@@ -219,24 +219,41 @@ async function getNews() {
 // ============================================================
 async function fetchArticleContent(url) {
   if (!url) return "";
-  try {
-    const res = await axios.get(url, {
-      timeout: 10000,
-      headers: { "User-Agent": "Mozilla/5.0" },
-    });
-    // Remove tags HTML e pega apenas o texto
-    const text = res.data
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    // Pega apenas os primeiros 5000 caracteres
-    return text.slice(0, 5000);
-  } catch (err) {
-    console.log("· Não foi possível buscar conteúdo original:", err.message);
-    return "";
+  const userAgents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0",
+  ];
+  for (const ua of userAgents) {
+    try {
+      const res = await axios.get(url, {
+        timeout: 12000,
+        headers: {
+          "User-Agent": ua,
+          "Accept": "text/html,application/xhtml+xml",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+        maxRedirects: 5,
+      });
+      const text = res.data
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+        .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, "")
+        .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, "")
+        .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, "")
+        .replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (text.length > 200) {
+        return text.slice(0, 6000);
+      }
+    } catch (err) {
+      continue;
+    }
   }
+  console.log("· Não foi possível buscar conteúdo original:", url);
+  return "";
 }
 
 // ============================================================
@@ -256,7 +273,7 @@ Sua tarefa é reescrever a notícia abaixo em português, produzindo um artigo l
 Título original: ${news.title}
 Descrição: ${news.description ?? ""}
 Fonte: ${news.source?.name ?? ""}
-${hasFullContent ? `\n--- CONTEÚDO COMPLETO DA NOTÍCIA ORIGINAL ---\n${fullContent}\n` : "\nATENÇÃO: Não foi possível obter o conteúdo completo da notícia original. Escreva APENAS com base nos dados acima (título + descrição). Seja mais curto — NÃO invente detalhes.\n"}
+${hasFullContent ? `\n--- CONTEÚDO COMPLETO DA NOTÍCIA ORIGINAL ---\n${fullContent}\n` : "\n--- NOTA ---\nConteúdo completo indisponível. Use apenas o título e descrição acima. Foque em contexto, histórico e significado da notícia. NÃO invente detalhes.\n"}
 
 --- REGRAS ABSOLUTAS ---
 1. O conteúdo DEVE ser baseado EXATAMENTE nos dados acima. NÃO invente informações que não estejam na notícia original.
@@ -264,11 +281,11 @@ ${hasFullContent ? `\n--- CONTEÚDO COMPLETO DA NOTÍCIA ORIGINAL ---\n${fullCon
 3. Use os nomes reais: pessoas, filmes, séries, jogos, empresas mencionados na notícia original.
 4. NÃO preencha espaço com texto vazio ou repetitivo. Cada parágrafo deve agregar informação nova.
 5. NÃO copie ou repita títulos de seções — invente títulos específicos e descritivos para cada seção.
-6. Se NÃO há conteúdo completo (apenas título + descrição), escreva um artigo mais curto. NÃO invente reação de fãs, opiniões, ou detalhes que não estejam na descrição.
+6. NÃO invente reação de fãs, opiniões, ou detalhes que não estejam na notícia original.
 
 --- ESTILO EDITORIAL (CNN Brasil) ---
 
-Escreva artigos longos (500-800 palavras quando houver conteúdo suficiente), com a seguinte estrutura:
+Escreva artigos longos e detalhados (mínimo 400 palavras), com a seguinte estrutura:
 
 **1. TÍTULO**
 * Título chamativo em português, direto e informativo
@@ -318,6 +335,22 @@ Escreva artigos longos (500-800 palavras quando houver conteúdo suficiente), co
 * NÃO use markdown (#, *, etc.) — use apenas HTML puro
 * NÃO use emojis
 * NÃO use <br>
+
+--- EXEMPLO DE ARTIGO BOM ---
+Veja como deve ser a estrutura e o estilo do artigo:
+
+<h2><strong>Kagurabachi: mangá vira fenômeno global e conquista público brasileiro</strong></h2>
+<em>Obra de Takeru Hokazono ganha destaque como um dos maiores sucessos recentes da nova geração da Shonen Jump</em>
+<p>O mangá Kagurabachi, criado por Takeru Hokazono, tornou-se um dos maiores fenômenos recentes da indústria japonesa de quadrinhos, conquistando rapidamente leitores ao redor do mundo — incluindo o Brasil, onde a obra já figura entre as mais comentadas nas comunidades de cultura pop.</p>
+<p>Lançado em 2023 na revista Weekly Shonen Jump, da editora Shueisha, o título surgiu inicialmente cercado de curiosidade e até memes nas redes sociais. No entanto, o que parecia apenas um hype momentâneo rapidamente se consolidou como um sucesso legítimo, impulsionado por uma narrativa consistente, estética marcante e sequências de ação intensas.</p>
+<h2><strong>Uma história de vingança e legado</strong></h2>
+<p>A trama acompanha Chihiro Rokuhira, um jovem espadachim que viveu uma infância tranquila ao lado de seu pai, Kunishige, um renomado ferreiro responsável por criar espadas especiais conhecidas como Lâminas Encantadas. Essas armas foram fundamentais para encerrar uma grande guerra no passado.</p>
+<p>A história toma um rumo trágico quando um grupo de feiticeiros invade a casa da família, assassina Kunishige e rouba as lâminas. Único sobrevivente, Chihiro passa a carregar o peso da perda e a missão de recuperar as armas.</p>
+<h2><strong>Crescimento e números</strong></h2>
+<p>Desde seu lançamento, Kagurabachi acumulou milhões de cópias em circulação e passou a figurar em listas de obras mais promissoras da indústria. O mangá também conquistou premiações importantes, como o Next Manga Award, além de indicações em rankings especializados.</p>
+<p>O sucesso comercial e crítico reforça o papel da obra como um dos principais candidatos a liderar a nova geração de títulos da Shonen Jump.</p>
+<h2><strong>Conclusão</strong></h2>
+<p>Com uma narrativa centrada em vingança, perda e legado, Kagurabachi se consolidou como um dos mangás mais relevantes da atualidade. A obra representa não apenas o sucesso de um novo autor, mas também a renovação de um mercado que segue em constante evolução.</p>
 
 --- SAÍDA ---
 RETORNE APENAS JSON VÁLIDO (sem markdown, sem \`\`\`):

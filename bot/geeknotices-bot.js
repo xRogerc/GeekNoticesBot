@@ -145,78 +145,63 @@ async function generateArticle(news) {
   const prompt = `
 Você é um jornalista profissional escrevendo para o Geek Notícias, um portal de tecnologia e entretenimento em português do Brasil.
 
-Sua tarefa é gerar uma notícia seguindo EXATAMENTE o padrão editorial abaixo:
+Sua tarefa é reescrever a notícia abaixo em português, seguindo o padrão editorial do site.
 
 --- DADOS DA NOTÍCIA ---
 Título original: ${news.title}
 Descrição: ${news.description ?? ""}
 Fonte: ${news.source?.name ?? ""}
 
---- DIRETRIZES DE ESCRITA ---
+--- REGRAS ABSOLUTAS ---
+1. O conteúdo DEVE ser baseado EXATAMENTE nos dados acima. NÃO invente informações que não estejam na notícia original.
+2. Se a notícia é sobre um filme, descreva ESSE filme. Se é sobre um jogo, descreva ESSE jogo. Se é sobre uma série, descreva ESSA série.
+3. NÃO escreva textos genéricos sobre história do streaming, evolução da tecnologia, ou assuntos tangenciais. Foque no assunto DA NOTÍCIA.
+4. Use os nomes reais: pessoas, filmes, séries, jogos, empresas mencionados na notícia original.
+5. Se a descrição original é curta, expanda com contexto relevante ao assunto específico (não genérico).
 
-ESTILO:
-* Português (Brasil)
-* Tom jornalístico, profissional e neutro
-* Linguagem formal, fluida e analítica
-* Narrativa contínua e envolvente
-* Escrita natural (evitar parecer IA ou texto robótico)
-
-ESTRUTURA OBRIGATÓRIA:
+--- PADRÃO EDITORIAL ---
 
 **1. TÍTULO**
-* Forte, direto e informativo
-* Pode incluir impacto ou relevância cultural
+* Reescreva o título em português, direto e informativo
+* Deve refletir fielmente o conteúdo da notícia
 
 **2. LINHA FINA (subtítulo)**
-* Complementa o título com contexto
+* 1 frase que resume a notícia
 
 **3. ABERTURA (LEAD)**
 * 1–2 parágrafos
-* Resume o acontecimento principal
-* Introduz importância do tema
+* Responda quem, o quê, quando, onde e por quê
+* Use os dados reais da notícia
 
-**4. DESENVOLVIMENTO (com subtítulos obrigatórios):**
-Use exatamente este padrão de seções:
+**4. DESENVOLVIMENTO**
+* Use 2 a 4 seções com <h3><strong>
+* O conteúdo de cada seção DEVE estar diretamente relacionado ao assunto da notícia
+* Se a notícia tem poucos detalhes, foque na análise do impacto e relevância
+* Use listas <ul><li> quando fizer sentido
 
-### Uma abordagem moderna / contexto atual
-* Explique o evento principal
-* Traga detalhes recentes ou da adaptação
+**5. CONCLUSÃO**
+* Síntese do impacto da notícia
+* O que vem pela frente
 
-### A origem / história completa
-* Contexto histórico ou origem do tema
-* Explicação aprofundada
-* Principais eventos ou elementos (pode usar lista)
-
-### Entre fidelidade e reinvenção
-* Mudanças, adaptações ou releituras
-* Decisões criativas ou estratégicas
-
-### Expectativa, críticas e impacto
-* Repercussão pública ou especializada
-* Importância cultural / mercado
-
-### Um legado para o futuro
-* Conclusão analítica
-* Impacto a longo prazo
-* Relevância para novas gerações
-
-REGRAS DE CONTEÚDO:
-* Explique tudo como se o leitor não conhecesse o tema
-* Inclua contexto histórico relevante
-* Use exemplos marcantes
-* Não invente dados específicos (datas, valores) sem certeza
-* Evite opinião pessoal — use análise contextual
-* Pode tratar ficção como reportagem (ex: filmes, jogos, livros)
-
-FORMATAÇÃO:
+--- FORMATAÇÃO ---
 * Parágrafos com <p>
 * Subtítulos com <h3><strong>
-* Listas com <ul><li> apenas quando agregarem clareza
+* Listas com <ul><li>
 * Destaque termos importantes em <strong>
 * Itálico para títulos de obras em <em>
 * NÃO use markdown — use apenas HTML
+* NÃO use emojis
 
-TAMANHO E QUALIDADE:
+--- SAÍDA ---
+RETORNE APENAS JSON VÁLIDO (sem markdown, sem \`\`\`):
+{
+  "title": "título em português",
+  "excerpt": "resumo (máx 200 caracteres)",
+  "content": "artigo em HTML",
+  "tags": ["tag1", "tag2", "tag3"],
+  "category": "games | cinema_tv | quadrinhos | tech | anime"
+}
+`;
 * Mínimo: 700 palavras
 * Texto denso, mas fluido
 * Evitar repetições
@@ -230,13 +215,6 @@ IMPORTANTE:
 * Tags em minúsculas, sem #
 
 RETORNE APENAS JSON VÁLIDO (sem markdown, sem \`\`\`):
-{
-  "title": "título claro e informativo em português",
-  "excerpt": "resumo objetivo (máx 200 caracteres)",
-  "content": "artigo completo em HTML seguindo a estrutura acima",
-  "tags": ["tag1", "tag2", "tag3"],
-  "category": "games | cinema_tv | quadrinhos | tech | anime"
-}
 `;
 
   const response = await openai.chat.completions.create({

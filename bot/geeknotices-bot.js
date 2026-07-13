@@ -123,6 +123,7 @@ async function getNews() {
     "ars-technica", "engadget", "gizmodo", "eurogamer", "destructoid",
   ];
   const allArticles = [];
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
   for (const src of sources) {
     try {
@@ -133,7 +134,12 @@ async function getNews() {
           apiKey: process.env.NEWS_API_KEY,
         },
       });
-      allArticles.push(...res.data.articles.slice(0, 5));
+      // Filtra apenas notícias das últimas 24 horas
+      const recent = res.data.articles.filter((a) => {
+        if (!a.publishedAt) return true;
+        return new Date(a.publishedAt) >= oneDayAgo;
+      });
+      allArticles.push(...recent.slice(0, 5));
     } catch (err) {
       // Fontes podem não estar disponíveis no free tier
     }
@@ -151,7 +157,11 @@ async function getNews() {
             apiKey: process.env.NEWS_API_KEY,
           },
         });
-        allArticles.push(...res.data.articles.slice(0, 10));
+        const recent = res.data.articles.filter((a) => {
+          if (!a.publishedAt) return true;
+          return new Date(a.publishedAt) >= oneDayAgo;
+        });
+        allArticles.push(...recent.slice(0, 10));
       } catch (err) {}
     }
   }

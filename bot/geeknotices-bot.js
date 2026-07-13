@@ -122,21 +122,14 @@ async function getNews() {
   // Fontes específicas de entretenimento/tech
   const sources = [
     "ign", "kotaku", "polygon", "the-verge", "techcrunch",
-    "ars-technica", "engadget", "gizmodo", "eurogamer", "destructoid",
-    "comicbook.com", "screenrant", "hollywoodreporter", "variety",
-    "deadline", "collider", "gamerant", "pcgamer", "pcgamesn",
-    "vg247", "pushsquare", "nintendolife", "purexbox", "gamesradar",
-    "siliconera", "anime-news-network", "thegamer", "dualshockers",
+    "engadget", "eurogamer", "destructoid",
   ];
   // Buscas por tópicos (usa everything endpoint — mais ampla)
   const queries = [
     "video game news", "gaming news", "anime news",
-    "movie news", "series news", "entertainment news",
-    "technology news", "pop culture",
-    "playstation", "xbox", "nintendo", "pc gaming",
-    "marvel", "dc comics", "star wars",
-    "netflix", "disney plus", "streaming",
-    "k-pop", "hololive", "vtuber",
+    "movie news", "entertainment news",
+    "playstation", "xbox", "nintendo",
+    "marvel", "star wars", "netflix", "streaming",
   ];
   const allArticles = [];
   const oneDayAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);

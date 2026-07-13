@@ -123,7 +123,7 @@ async function getNews() {
     "ars-technica", "engadget", "gizmodo", "eurogamer", "destructoid",
   ];
   const allArticles = [];
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const oneDayAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
   for (const src of sources) {
     try {

@@ -1,0 +1,15 @@
+{
+  "name": "geeknotices-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node geeknotices-bot.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "axios": "^1.7.0",
+    "openai": "^4.68.0",
+    "slugify": "^1.6.6"
+  }
+}

@@ -1,0 +1,163 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  Outlet,
+  Link,
+  createRootRouteWithContext,
+  useRouter,
+  HeadContent,
+  Scripts,
+} from "@tanstack/react-router";
+import { useEffect, type ReactNode } from "react";
+
+import appCss from "../styles.css?url";
+import { reportLovableError } from "../lib/lovable-error-reporting";
+import { SiteHeader } from "@/components/site-header";
+import { Toaster } from "sonner";
+import { AdSlot } from "@/components/ad-slot";
+import { AD_SLOTS, ADSENSE_CLIENT, ADSENSE_ENABLED } from "@/lib/ads";
+
+function NotFoundComponent() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-7xl font-bold text-foreground">404</h1>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          The page you're looking for doesn't exist or has been moved.
+        </p>
+        <div className="mt-6">
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Go home
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+  console.error(error);
+  const router = useRouter();
+  useEffect(() => {
+    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+  }, [error]);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          This page didn't load
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Something went wrong on our end. You can try refreshing or head back home.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <button
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Try again
+          </button>
+          <a
+            href="/"
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            Go home
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  head: () => ({
+    meta: [
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "google-adsense-account", content: "ca-pub-1087663277432938" },
+      { title: "Geek Notices — Notícias geek escritas pela comunidade" },
+      { name: "description", content: "Notícias de games, cinema, quadrinhos, tech e anime escritas e publicadas pela comunidade geek." },
+      { name: "author", content: "Geek Notices" },
+      { property: "og:title", content: "Geek Notices — Notícias geek escritas pela comunidade" },
+      { property: "og:description", content: "Notícias de games, cinema, quadrinhos, tech e anime escritas e publicadas pela comunidade geek." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Geek Notices — Notícias geek escritas pela comunidade" },
+      { name: "twitter:description", content: "Notícias de games, cinema, quadrinhos, tech e anime escritas e publicadas pela comunidade geek." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/0bdef8fe-ab23-488a-bb82-e0b5c87b39df" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/0bdef8fe-ab23-488a-bb82-e0b5c87b39df" },
+    ],
+    links: [
+      {
+        rel: "stylesheet",
+        href: appCss,
+      },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap",
+      },
+    ],
+    scripts: ADSENSE_ENABLED
+      ? [
+          {
+            src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`,
+            async: true,
+            crossOrigin: "anonymous",
+          },
+        ]
+      : [],
+  }),
+  shellComponent: RootShell,
+  component: RootComponent,
+  notFoundComponent: NotFoundComponent,
+  errorComponent: ErrorComponent,
+});
+
+function RootShell({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+        <Scripts />
+      </body>
+    </html>
+  );
+}
+
+function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <div className="min-h-screen flex flex-col">
+        <SiteHeader />
+        <div className="mx-auto max-w-6xl w-full px-4 pt-4">
+          <AdSlot slot={AD_SLOTS.header} format="auto" minHeight={90} />
+        </div>
+        <main className="flex-1">
+          <Outlet />
+        </main>
+        <div className="mx-auto max-w-6xl w-full px-4 pb-4">
+          <AdSlot slot={AD_SLOTS.footer} format="auto" minHeight={90} label="Publicidade" />
+        </div>
+        <footer className="border-t border-border/60 py-6 text-center text-sm text-muted-foreground">
+          <p>© {new Date().getFullYear()} Geek Notices — feito por geeks, para geeks.</p>
+        </footer>
+      </div>
+      <Toaster theme="dark" richColors position="top-right" />
+    </QueryClientProvider>
+  );
+}

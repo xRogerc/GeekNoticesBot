@@ -231,8 +231,8 @@ async function fetchArticleContent(url) {
       .replace(/<[^>]+>/g, " ")
       .replace(/\s+/g, " ")
       .trim();
-    // Pega apenas os primeiros 3000 caracteres
-    return text.slice(0, 3000);
+    // Pega apenas os primeiros 5000 caracteres
+    return text.slice(0, 5000);
   } catch (err) {
     console.log("· Não foi possível buscar conteúdo original:", err.message);
     return "";
@@ -248,68 +248,84 @@ async function generateArticle(news) {
   const hasFullContent = fullContent && fullContent.length > 200;
 
   const prompt = `
-Você é um jornalista profissional escrevendo para o Geek Notícias, um portal de tecnologia e entretenimento em português do Brasil.
+Você é um jornalista profissional escrevendo para o Geek Notícias, um portal de tecnologia e entretenimento em português do Brasil. Seu estilo é similar ao CNN Brasil — denso, informativo, com análise e contexto.
 
-Sua tarefa é reescrever a notícia abaixo em português, seguindo o padrão editorial do site.
+Sua tarefa é reescrever a notícia abaixo em português, produzindo um artigo longo e detalhado.
 
 --- DADOS DA NOTÍCIA ---
 Título original: ${news.title}
 Descrição: ${news.description ?? ""}
 Fonte: ${news.source?.name ?? ""}
-${hasFullContent ? `\n--- CONTEÚDO COMPLETO DA NOTÍCIA ORIGINAL ---\n${fullContent}\n` : "\nATENÇÃO: Não foi possível obter o conteúdo completo da notícia original. Escreva APENAS com base nos dados acima (título + descrição). Seja curto e direto — NÃO invente detalhes.\n"}
+${hasFullContent ? `\n--- CONTEÚDO COMPLETO DA NOTÍCIA ORIGINAL ---\n${fullContent}\n` : "\nATENÇÃO: Não foi possível obter o conteúdo completo da notícia original. Escreva APENAS com base nos dados acima (título + descrição). Seja mais curto — NÃO invente detalhes.\n"}
 
 --- REGRAS ABSOLUTAS ---
 1. O conteúdo DEVE ser baseado EXATAMENTE nos dados acima. NÃO invente informações que não estejam na notícia original.
 2. Se a notícia é sobre um filme, descreva ESSE filme. Se é sobre um jogo, descreva ESSE jogo. Se é sobre uma série, descreva ESSA série.
-3. NÃO escreva textos genéricos sobre história do streaming, evolução da tecnologia, ou assuntos tangenciais. Foque no assunto DA NOTÍCIA.
-4. Use os nomes reais: pessoas, filmes, séries, jogos, empresas mencionados na notícia original.
-5. Se a descrição original é curta, expanda com contexto relevante ao assunto específico (não genérico).
-6. NÃO preencha espaço com texto vazio ou repetitivo. Se tem pouco conteúdo, escreva menos — qualidade > quantidade.
-7. NÃO copie ou ecolhe títulos de seções como "contexto atual", "história completa", "entre fidelidade e reinvenção", "legado para o futuro" — invente títulos específicos para cada seção.
-8. Se NÃO há conteúdo completo (apenas título + descrição), escreva um artigo de no máximo 3 parágrafos. NÃO invente reação de fãs, opiniões, ou detalhes que não estejam na descrição.
+3. Use os nomes reais: pessoas, filmes, séries, jogos, empresas mencionados na notícia original.
+4. NÃO preencha espaço com texto vazio ou repetitivo. Cada parágrafo deve agregar informação nova.
+5. NÃO copie ou repita títulos de seções — invente títulos específicos e descritivos para cada seção.
+6. Se NÃO há conteúdo completo (apenas título + descrição), escreva um artigo mais curto. NÃO invente reação de fãs, opiniões, ou detalhes que não estejam na descrição.
 
---- PADRÃO EDITORIAL ---
+--- ESTILO EDITORIAL (CNN Brasil) ---
+
+Escreva artigos longos (500-800 palavras quando houver conteúdo suficiente), com a seguinte estrutura:
 
 **1. TÍTULO**
-* Reescreva o título em português, direto e informativo
+* Título chamativo em português, direto e informativo
 * Deve refletir fielmente o conteúdo da notícia
 
 **2. LINHA FINA (subtítulo)**
-* 1 frase que resume a notícia
+* 1-2 frases que resumam a notícia
+* Itálico com <em>
 
 **3. ABERTURA (LEAD)**
-* 1–2 parágrafos
+* 2-3 parágrafos
 * Responda quem, o quê, quando, onde e por quê
+* Contextualize o leitor imediatamente sobre o assunto
 * Use os dados reais da notícia
 
-**4. DESENVOLVIMENTO**
-* Crie de 2 a 4 seções com títulos PRÓPRIOS baseados no assunto
-* NÃO use títulos genéricos como "contexto atual", "história completa", "legado"
-* Os títulos devem descrever o que cada seção aborda (ex: "O que é [filme/jogo/série]", "Por que importa", "Reação dos fãs", "O que esperar")
-* Todo conteúdo DEVE estar diretamente relacionado ao assunto da notícia
-* Se a notícia tem poucos detalhes, escreva um artigo mais curto — NÃO preencha com texto genérico
-* Use listas <ul><li> quando fizer sentido
+**4. CONTEXTO E HISTÓRICO**
+* 1-2 seções explicando o contexto por trás da notícia
+* Explique a origem do assunto, marcos anteriores, evolução
+* Use dados, datas e nomes reais quando disponíveis
+* Exemplos de títulos: "Origem do projeto", "A obra original e o legado", "Como chegamos até aqui"
 
-**5. CONCLUSÃO**
-* Síntese do impacto da notícia
+**5. DESENVOLVIMENTO**
+* 3-5 seções com títulos PRÓPRIOS baseados no assunto
+* Cada seção deve abordar um ângulo diferente da notícia
+* Inclua detalhes técnicos, números, impactos
+* Use listas <ul><li> quando fizer sentido (elencos, especificações, etc.)
+* Exemplos de títulos: "Um universo mais sombrio", "Mudanças estratégicas", "Reação do mercado"
+
+**6. ANÁLISE E IMPACTO**
+* 1-2 seções sobre o significado da notícia
+* Impacto no mercado, na indústria, nos fãs
+* Comparação com tendências anteriores
+* O que isso significa para o futuro do assunto
+
+**7. CONCLUSÃO**
+* Síntese do impacto
 * O que vem pela frente
+* Feche com perspectiva ou expectativa
 
---- FORMATAÇÃO ---
-* Parágrafos com <p>
-* Subtítulos com <h3><strong>
-* Listas com <ul><li>
-* Destaque termos importantes em <strong>
-* Itálico para títulos de obras em <em>
-* NÃO use markdown — use apenas HTML
+--- FORMATAÇÃO HTML ---
+* Parágrafos: <p>
+* Subtítulos de seção: <h2><strong>
+* Subtítulos internos: <h3><strong>
+* Listas: <ul><li>
+* Destaque termos importantes: <strong>
+* Títulos de obras (filmes, jogos, séries, mangás): <em>
+* NÃO use markdown (#, *, etc.) — use apenas HTML puro
 * NÃO use emojis
+* NÃO use <br>
 
 --- SAÍDA ---
 RETORNE APENAS JSON VÁLIDO (sem markdown, sem \`\`\`):
 {
-  "title": "título em português",
-  "excerpt": "resumo (máx 200 caracteres)",
-  "content": "artigo em HTML",
-  "tags": ["tag1", "tag2", "tag3"],
+  "title": "título chamativo em português",
+  "excerpt": "resumo em 1-2 frases (máx 200 caracteres)",
+  "content": "artigo completo em HTML com todas as seções",
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
   "category": "games | cinema_tv | quadrinhos | tech | anime"
 }
 `;
@@ -326,13 +342,44 @@ RETORNE APENAS JSON VÁLIDO (sem markdown, sem \`\`\`):
 // ============================================================
 // 3. EVITAR DUPLICAÇÃO
 // ============================================================
+
+// Normaliza título para comparação: lowercase, sem acentos, sem pontuação
+function normalizeTitle(str) {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Calcula similaridade simples (Jaccard) entre dois conjuntos de palavras
+function titleSimilarity(a, b) {
+  const wordsA = new Set(normalizeTitle(a).split(" "));
+  const wordsB = new Set(normalizeTitle(b).split(" "));
+  const intersection = [...wordsA].filter((w) => wordsB.has(w));
+  const union = new Set([...wordsA, ...wordsB]);
+  return intersection.length / union.size;
+}
+
 async function alreadyExists(title) {
-  const { data } = await supabase
+  // Checar similaridade de título (evita temas repetidos)
+  const { data: recent } = await supabase
     .from("articles")
-    .select("id")
-    .ilike("title", `%${title.slice(0, 40)}%`)
-    .limit(1);
-  return (data?.length ?? 0) > 0;
+    .select("id, title")
+    .gte("created_at", new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString())
+    .limit(100);
+
+  if (recent) {
+    for (const article of recent) {
+      if (titleSimilarity(title, article.title) > 0.4) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 // ============================================================

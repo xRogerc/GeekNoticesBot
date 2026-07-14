@@ -141,17 +141,43 @@ async function getNewsFromGNews() {
   ];
   const articles = [];
   const oneDayAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+  const gnewsKey = process.env.GNEWS_API_KEY;
+
+  if (!gnewsKey) {
+    console.error("✗ GNEWS_API_KEY não configurada!");
+    return [];
+  }
+
+  console.log(`  GNews key: ${gnewsKey.slice(0, 8)}...`);
+
+  // Função para esperar
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  let consecutiveErrors = 0;
 
   for (const q of queries) {
+    // Se 3 erros seguidos, para (rate limit pesado)
+    if (consecutiveErrors >= 3) {
+      console.log(`  ⏹ GNews: 3 erros seguidos, parando queries`);
+      break;
+    }
+
     try {
       const res = await axios.get("https://gnews.io/api/v4/search", {
         params: {
           q,
           lang: "en",
           max: 5,
-          token: process.env.GNEWS_API_KEY,
+          token: gnewsKey,
         },
       });
+      if (res.data.errors) {
+        console.log(`  ✗ GNews "${q}": erro - ${JSON.stringify(res.data.errors)}`);
+        consecutiveErrors++;
+        await sleep(3000);
+        continue;
+      }
+      consecutiveErrors = 0;
       const recent = (res.data.articles || []).filter((a) => {
         if (!a.publishedAt) return true;
         return new Date(a.publishedAt) >= oneDayAgo;
@@ -161,9 +187,15 @@ async function getNewsFromGNews() {
       }
       articles.push(...recent.map(normalizeArticle).slice(0, 3));
     } catch (err) {
-      // GNews pode estar indisponível
+      const status = err.response?.status || "N/A";
+      const body = err.response?.data ? JSON.stringify(err.response.data).slice(0, 200) : err.message;
+      console.log(`  ✗ GNews "${q}": ${status} - ${body}`);
+      consecutiveErrors++;
     }
+    // Espera 2s entre cada requisição para evitar rate limit
+    await sleep(2000);
   }
+  console.log(`  GNews total: ${articles.length} notícias`);
   return articles;
 }
 
@@ -244,7 +276,7 @@ async function getNews() {
 
   // 3. Fallback: GNews (se NewsAPI estourou ou retornou poucas notícias)
   if (allArticles.length < 5 || newsApiFailed) {
-    console.log("🔄 Buscando notícias no GNews...");
+    console.log(`🔄 Buscando notícias no GNews... (NewsAPI failed: ${newsApiFailed}, current: ${allArticles.length})`);
     const gnewsArticles = await getNewsFromGNews();
     allArticles.push(...gnewsArticles);
   }

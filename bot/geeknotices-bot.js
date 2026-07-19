@@ -448,7 +448,7 @@ Veja como deve ser a estrutura e o estilo do artigo:
 RETORNE APENAS JSON VÁLIDO (sem markdown, sem \`\`\`):
 {
   "title": "título chamativo em português",
-  "excerpt": "resumo em 1-2 frases (máx 200 caracteres)",
+  "excerpt": "resumo em 1-2 frases com HTML (máx 300 caracteres, use <p> e <strong>)",
   "content": "artigo completo em HTML com todas as seções",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
   "category": "games | cinema_tv | quadrinhos | tech | anime"
@@ -456,7 +456,7 @@ RETORNE APENAS JSON VÁLIDO (sem markdown, sem \`\`\`):
 `;
 
   const response = await openai.chat.completions.create({
-    model: "meta-llama/llama-4-scout-17b-16e-instruct",
+    model: "llama-3.3-70b-versatile",
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" },
   });
@@ -609,7 +609,7 @@ async function saveArticle(article, news) {
     title: article.title,
     slug,
     content: article.content,
-    excerpt: (article.excerpt || "").slice(0, 200),
+    excerpt: (article.excerpt || "").slice(0, 300),
     category,
     tags: Array.isArray(article.tags) ? article.tags.slice(0, 8) : [],
     cover_image_url: imageUrl || `https://source.unsplash.com/featured/?${encodeURIComponent(category)}`,
